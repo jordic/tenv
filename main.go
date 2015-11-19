@@ -1,12 +1,15 @@
 package main
 
 import (
-	"github.com/fatih/color"
+	"log"
 	"os"
 	"strings"
 	"text/template"
+
+	"github.com/fatih/color"
 )
 
+// TEST="asdf,asdf,asdf" ./main template.tpl
 func main() {
 
 	if len(os.Args) != 2 {
@@ -18,8 +21,16 @@ func main() {
 		color.Cyan("Usage : tenv filename")
 		os.Exit(1)
 	}
+	var funcMap template.FuncMap
+	funcMap = template.FuncMap{
+		"split": strings.Split,
+		"title": func(a string) string { return strings.Title(a) },
+	}
 
-	t, _ := template.ParseFiles(os.Args[1])
+	t, err := template.New(os.Args[1]).Funcs(funcMap).ParseFiles(os.Args[1])
+	if err != nil {
+		log.Fatalf("Error parsing template %s", err)
+	}
 
 	context := make(map[string]string)
 	for _, v := range os.Environ() {
@@ -27,6 +38,9 @@ func main() {
 		context[p[0]] = p[1]
 	}
 
-	t.Execute(os.Stdout, context)
+	err = t.ExecuteTemplate(os.Stdout, os.Args[1], context)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 }
