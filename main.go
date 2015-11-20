@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -13,7 +14,7 @@ import (
 func main() {
 
 	if len(os.Args) != 2 {
-		color.Red("tenv: v.0")
+		color.Red("tenv: v.01")
 		color.Blue("------------------------")
 		color.Cyan("Prepopulates to stdin given template with information stored in env variables")
 		color.Cyan("variables should follow go template syntax {{.VAR_NAME}}")
@@ -24,12 +25,13 @@ func main() {
 	var funcMap template.FuncMap
 	funcMap = template.FuncMap{
 		"split": strings.Split,
-		"title": func(a string) string { return strings.Title(a) },
 	}
 
-	t, err := template.New(os.Args[1]).Funcs(funcMap).ParseFiles(os.Args[1])
+	file := filepath.Base(os.Args[1])
+
+	t, err := template.New(file).Funcs(funcMap).ParseFiles(os.Args[1])
 	if err != nil {
-		log.Fatalf("Error parsing template %s", err)
+		log.Fatalf("Error: %s", err)
 	}
 
 	context := make(map[string]string)
@@ -38,7 +40,7 @@ func main() {
 		context[p[0]] = p[1]
 	}
 
-	err = t.ExecuteTemplate(os.Stdout, os.Args[1], context)
+	err = t.ExecuteTemplate(os.Stdout, file, context)
 	if err != nil {
 		log.Fatal(err)
 	}
